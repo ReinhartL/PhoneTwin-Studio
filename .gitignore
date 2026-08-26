@@ -7,3 +7,4 @@ certs/*.pem
 assets/model-reference/**/*.jpg
 assets/model-reference/**/*.jpeg
 assets/model-reference/**/*.png
+.gstack/

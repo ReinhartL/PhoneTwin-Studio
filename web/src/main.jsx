@@ -35,6 +35,7 @@ function PhoneScene({
 }) {
   const ref = useRef();
   const state = useRef({});
+  const [magnifierEnabled, setMagnifierEnabled] = useState(false);
   useEffect(() => {
     const el = ref.current;
     const scene = new THREE.Scene();
@@ -122,6 +123,18 @@ function PhoneScene({
       lastY = e.clientY;
     };
     const move = (e) => {
+      const bounds = el.getBoundingClientRect();
+      state.current.pointerX = THREE.MathUtils.clamp(
+        e.clientX - bounds.left,
+        0,
+        bounds.width,
+      );
+      state.current.pointerY = THREE.MathUtils.clamp(
+        e.clientY - bounds.top,
+        0,
+        bounds.height,
+      );
+      state.current.pointerInside = true;
       if (!dragging) return;
       root.rotation.y += (e.clientX - lastX) * 0.008;
       root.rotation.x = THREE.MathUtils.clamp(
@@ -135,11 +148,15 @@ function PhoneScene({
     const up = () => {
       dragging = false;
     };
+    const leave = () => {
+      dragging = false;
+      state.current.pointerInside = false;
+    };
     el.addEventListener("wheel", onWheel, { passive: false });
     el.addEventListener("pointerdown", down);
     el.addEventListener("pointermove", move);
     el.addEventListener("pointerup", up);
-    el.addEventListener("pointerleave", up);
+    el.addEventListener("pointerleave", leave);
     addEventListener("resize", onResize);
     let t = 0;
     const tick = () => {
@@ -177,6 +194,39 @@ function PhoneScene({
       }
       if (!dragging && !state.current.viewLock && !state.current.directorTween)
         root.rotation.x = Math.sin(t * 0.45) * 0.025;
+      const width = Math.max(1, el.clientWidth);
+      const height = Math.max(1, el.clientHeight);
+      const followPointer = state.current.magnifierEnabled && state.current.pointerInside;
+      const targetZoom = followPointer ? 1.65 : 1;
+      state.current.focusZoom = THREE.MathUtils.lerp(
+        state.current.focusZoom ?? 1,
+        targetZoom,
+        0.14,
+      );
+      state.current.focusX = THREE.MathUtils.lerp(
+        state.current.focusX ?? width / 2,
+        followPointer ? state.current.pointerX : width / 2,
+        0.16,
+      );
+      state.current.focusY = THREE.MathUtils.lerp(
+        state.current.focusY ?? height / 2,
+        followPointer ? state.current.pointerY : height / 2,
+        0.16,
+      );
+      if (state.current.focusZoom > 1.002) {
+        const viewWidth = width / state.current.focusZoom;
+        const viewHeight = height / state.current.focusZoom;
+        camera.setViewOffset(
+          width,
+          height,
+          THREE.MathUtils.clamp(state.current.focusX - viewWidth / 2, 0, width - viewWidth),
+          THREE.MathUtils.clamp(state.current.focusY - viewHeight / 2, 0, height - viewHeight),
+          viewWidth,
+          viewHeight,
+        );
+      } else {
+        camera.clearViewOffset();
+      }
       renderer.render(scene, camera);
       state.current.raf = requestAnimationFrame(tick);
     };
@@ -185,10 +235,14 @@ function PhoneScene({
     return () => {
       cancelAnimationFrame(state.current.raf);
       removeEventListener("resize", onResize);
+      camera.clearViewOffset();
       renderer.dispose();
       el.removeChild(renderer.domElement);
     };
   }, [preset]);
+  useEffect(() => {
+    state.current.magnifierEnabled = magnifierEnabled;
+  }, [magnifierEnabled]);
   useEffect(() => {
     if (!motionQuaternion) {
       state.current.targetQuat = null;
@@ -398,11 +452,21 @@ function PhoneScene({
   }, [materialSettings]);
   return (
     <div className="scene" ref={ref}>
+      <button
+        type="button"
+        className={`magnifier-toggle${magnifierEnabled ? " active" : ""}`}
+        aria-label={magnifierEnabled ? "Disable cursor magnifier" : "Enable cursor magnifier"}
+        title={magnifierEnabled ? "Disable cursor magnifier" : "Enable cursor magnifier"}
+        onPointerDown={(event) => event.stopPropagation()}
+        onClick={() => setMagnifierEnabled((enabled) => !enabled)}
+      >
+        <span aria-hidden="true" />
+      </button>
       <button className="spin" onClick={() => setSpinning((v) => !v)}>
         {spinning ? "PAUSE" : "SPIN"} <span>↻</span>
       </button>
       <div className="scene-label">
-        LIVE MODEL / 01 · WHEEL TO ZOOM · DRAG TO ORBIT
+        LIVE MODEL / 01 · WHEEL TO ZOOM · DRAG TO ORBIT · CURSOR MAGNIFIER
       </div>
     </div>
   );
@@ -529,7 +593,7 @@ function App() {
           preferCurrentTab: true,
         });
       } else {
-        const canvas = document.querySelector(".scene canvas");
+        const canvas = document.querySelector(".scene > canvas");
         if (!canvas?.captureStream) throw new Error("canvas capture unavailable");
         stream = canvas.captureStream(60);
       }
@@ -805,7 +869,7 @@ function App() {
         <div className="brand">
           <span className="mark">✦</span>
           <span>
-            IMG2<span>THREE</span>
+            phone<span>Twin</span> Studio
           </span>
         </div>
         <div className="crumb">
