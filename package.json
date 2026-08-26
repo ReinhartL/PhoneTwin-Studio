@@ -1,0 +1,21 @@
+{
+  "name": "phonetwin-studio",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "relay": "node relay/server.mjs",
+    "motion": "npm run relay",
+    "test": "node --test web/src/*.test.mjs",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "^6.1.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "three": "^0.185.1",
+    "vite": "^8.2.2",
+    "ws": "^8.18.3"
+  }
+}

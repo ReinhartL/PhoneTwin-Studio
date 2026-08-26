@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.DS_Store
+*.xcuserstate
+ios/**/xcuserdata/
+certs/*.pem
+assets/model-reference/**/*.jpg
+assets/model-reference/**/*.jpeg
+assets/model-reference/**/*.png

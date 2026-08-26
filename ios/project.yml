@@ -1,0 +1,54 @@
+name: PhoneTwinSender
+options:
+  bundleIdPrefix: com.img2threejs
+  deploymentTarget:
+    iOS: "17.0"
+settings:
+  base:
+    SWIFT_VERSION: 5.9
+    DEVELOPMENT_TEAM: ""
+schemes:
+  PhoneTwinSender:
+    build:
+      targets:
+        PhoneTwinSender: all
+    run:
+      config: Debug
+  PhoneTwinBroadcast:
+    build:
+      targets:
+        PhoneTwinBroadcast: all
+    run:
+      config: Debug
+targets:
+  PhoneTwinSender:
+    type: application
+    platform: iOS
+    sources:
+      - path: PhoneTwinSender
+        excludes:
+          - BroadcastSampleHandler.swift
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: com.img2threejs.PhoneTwinSender
+      INFOPLIST_FILE: PhoneTwinSender/Info.plist
+      CODE_SIGN_ENTITLEMENTS: PhoneTwinSender/PhoneTwinSender.entitlements
+    dependencies:
+      - target: PhoneTwinBroadcast
+  PhoneTwinBroadcast:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: PhoneTwinSender
+        includes:
+          - BroadcastSampleHandler.swift
+          - SessionTransport.swift
+          - MotionPacket.swift
+          - MotionCapture.swift
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: com.img2threejs.PhoneTwinSender.Broadcast
+      INFOPLIST_FILE: PhoneTwinBroadcast/Info.plist
+      CODE_SIGN_ENTITLEMENTS: PhoneTwinBroadcast/PhoneTwinBroadcast.entitlements
+    frameworks:
+      - ReplayKit
+      - CoreMotion
+      - CoreImage
