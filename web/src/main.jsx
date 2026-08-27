@@ -32,6 +32,10 @@ function PhoneScene({
   screenFrame,
   calibrationVersion,
   actionReset,
+  pathPoints,
+  pathEditing,
+  onPathPoint,
+  showIntro,
 }) {
   const ref = useRef();
   const state = useRef({});
@@ -60,10 +64,15 @@ function PhoneScene({
     // applied only to the model inside this pivot.
     modelPivot.quaternion.copy(modelFlip);
     scene.add(modelPivot);
+    const pathGroup = new THREE.Group();
+    pathGroup.visible = false;
+    scene.add(pathGroup);
+    state.current.pathGroup = pathGroup;
     const root = createIPhone17ProMaxModel();
     modelPivot.add(root);
     root.rotation.y = 0.55;
     state.current.root = root;
+    state.current.pathEditing = pathEditing;
     state.current.modelPivot = modelPivot;
     state.current.camera = camera;
     state.current.directorPlaying = directorPlaying;
@@ -118,6 +127,17 @@ function PhoneScene({
       );
     };
     const down = (e) => {
+      if (state.current.pathEditing) {
+        const bounds = el.getBoundingClientRect();
+        const nx = (e.clientX - bounds.left) / Math.max(1, bounds.width) - 0.5;
+        const ny = 0.5 - (e.clientY - bounds.top) / Math.max(1, bounds.height);
+        state.current.onPathPoint?.([
+          THREE.MathUtils.clamp(nx * 5.2, -2.6, 2.6),
+          THREE.MathUtils.clamp(ny * 3.8, -1.9, 1.9),
+          THREE.MathUtils.clamp(12.2 - Math.abs(nx) * 2.4 - ny * 1.2, 8.4, 14.5),
+        ]);
+        return;
+      }
       dragging = true;
       lastX = e.clientX;
       lastY = e.clientY;
@@ -167,7 +187,8 @@ function PhoneScene({
         const eased = frame.progress < 0.5
           ? 4 * frame.progress * frame.progress * frame.progress
           : 1 - Math.pow(-2 * frame.progress + 2, 3) / 2;
-        camera.position.z = THREE.MathUtils.lerp(frame.fromZ, frame.toZ, eased);
+        if (frame.path) camera.position.copy(frame.path.getPointAt(eased));
+        else camera.position.z = THREE.MathUtils.lerp(frame.fromZ, frame.toZ, eased);
         root.rotation.x = THREE.MathUtils.lerp(frame.fromRotation.x, frame.toRotation.x, eased);
         root.rotation.y = THREE.MathUtils.lerp(frame.fromRotation.y, frame.toRotation.y, eased);
         root.rotation.z = THREE.MathUtils.lerp(frame.fromRotation.z, frame.toRotation.z, eased);
@@ -240,6 +261,34 @@ function PhoneScene({
       el.removeChild(renderer.domElement);
     };
   }, [preset]);
+  useEffect(() => {
+    state.current.pathEditing = pathEditing;
+    state.current.onPathPoint = onPathPoint;
+  }, [pathEditing, onPathPoint]);
+  useEffect(() => {
+    const group = state.current.pathGroup;
+    if (!group) return;
+    group.clear();
+    group.visible = Boolean(pathEditing && pathPoints?.length);
+    if (!pathPoints?.length) return;
+    const points = pathPoints.map(([x, y, z]) => new THREE.Vector3(x, y, z));
+    if (points.length > 1) {
+      const curve = new THREE.CatmullRomCurve3(points);
+      group.add(new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints(curve.getPoints(64)),
+        new THREE.LineBasicMaterial({ color: 0x74e5ed, transparent: true, opacity: 0.8 }),
+      ));
+    }
+    const markerGeometry = new THREE.SphereGeometry(0.09, 12, 8);
+    points.forEach((point, index) => {
+      const marker = new THREE.Mesh(
+        markerGeometry,
+        new THREE.MeshBasicMaterial({ color: index === 0 ? 0xffd166 : 0x74e5ed }),
+      );
+      marker.position.copy(point);
+      group.add(marker);
+    });
+  }, [pathPoints, pathEditing]);
   useEffect(() => {
     state.current.magnifierEnabled = magnifierEnabled;
   }, [magnifierEnabled]);
@@ -399,6 +448,9 @@ function PhoneScene({
       dive: { z: 10.4, rotation: [-0.45, 0.15, 0] },
       pull: { z: 15, rotation: [-0.08, Math.PI * 0.15, 0] },
     }[director] || { z: 11.8, rotation: [0, 0.55, 0] };
+    const customPath = director === "path" && pathPoints?.length > 1
+      ? new THREE.CatmullRomCurve3(pathPoints.map(([x, y, z]) => new THREE.Vector3(x, y, z)))
+      : null;
     state.current.viewLock = true;
     // directorRun is the authoritative restart signal. React may keep the
     // public playing state at true between two consecutive action clicks, so
@@ -407,7 +459,8 @@ function PhoneScene({
     state.current.directorTween = {
       progress: 0,
       fromZ: c.position.z,
-      toZ: target.z,
+      toZ: customPath ? pathPoints[pathPoints.length - 1][2] : target.z,
+      path: customPath,
       fromRotation: r.rotation.clone(),
       toRotation: new THREE.Euler(...target.rotation),
     };
@@ -465,7 +518,7 @@ function PhoneScene({
       <button className="spin" onClick={() => setSpinning((v) => !v)}>
         {spinning ? "PAUSE" : "SPIN"} <span>↻</span>
       </button>
-      <div className="scene-label">
+      <div className={`scene-label${showIntro ? "" : " scene-label-hidden"}`}>
         LIVE MODEL / 01 · WHEEL TO ZOOM · DRAG TO ORBIT · CURSOR MAGNIFIER
       </div>
     </div>
@@ -520,6 +573,8 @@ function App() {
   const [directorPlaying, setDirectorPlaying] = useState(false);
   const [directorSpeed, setDirectorSpeed] = useState(1);
   const [actionReset, setActionReset] = useState(0);
+  const [pathPoints, setPathPoints] = useState([]);
+  const [pathEditing, setPathEditing] = useState(false);
   const [recording, setRecording] = useState(false);
   const [recordingStatus, setRecordingStatus] = useState("Idle");
   const [captureWorkspace, setCaptureWorkspace] = useState(true);
@@ -654,6 +709,7 @@ function App() {
     setDirectorPlaying(true);
     setDirectorRun((run) => run + 1);
   };
+  const addPathPoint = (point) => setPathPoints((points) => [...points, point].slice(-8));
   const chooseView = (nextView) => {
     resetAction();
     setDirectorPlaying(false);
@@ -893,8 +949,8 @@ function App() {
             <em>in motion.</em>
           </h1>
           <p>
-            A live, animation-ready twin built from one reference image. Every
-            surface, socket and state is yours to control.
+            A real-time iPhone twin for motion capture, screen streaming and
+            cinematic camera control. Every surface and state stays in sync.
           </p>
           <div className="chips">
             <span>● 60 FPS</span>
@@ -927,6 +983,10 @@ function App() {
           screenFrame={screenFrame}
           calibrationVersion={calibrationVersion}
           actionReset={actionReset}
+          pathPoints={pathPoints}
+          pathEditing={pathEditing}
+          onPathPoint={addPathPoint}
+          showIntro={showIntro}
         />
         <aside className="panel">
           <div className="panel-tabs">
@@ -1201,6 +1261,16 @@ function App() {
                   </button>
                 ))}
               </div>
+              <div className="path-planner">
+                <div className="panel-title">PATH PLANNER</div>
+                <small>{pathPoints.length} control points · click the stage to add</small>
+                <div className="motion-row">
+                  <button className={pathEditing ? "active" : ""} onClick={() => setPathEditing((value) => !value)}>{pathEditing ? "EDITING" : "EDIT PATH"}</button>
+                  <button onClick={() => setPathPoints((points) => points.slice(0, -1))}>UNDO</button>
+                  <button onClick={() => setPathPoints([])}>CLEAR</button>
+                </div>
+                <button className="wide" disabled={pathPoints.length < 2} onClick={() => runDirector("path")}>PLAY CUSTOM PATH</button>
+              </div>
               <div className="motion-row speed">
                 <button className={directorSpeed === 0.55 ? "active" : ""} onClick={() => setDirectorSpeed(0.55)}>SLOW</button>
                 <button className={directorSpeed === 1 ? "active" : ""} onClick={() => setDirectorSpeed(1)}>STANDARD</button>
@@ -1278,9 +1348,6 @@ function App() {
         <span className="line active-line" />
         <span>
           <b>03</b> INTERACTION
-        </span>
-        <span className="footer-note">
-          built with img2threejs · code-only geometry
         </span>
       </footer>
     </main>
