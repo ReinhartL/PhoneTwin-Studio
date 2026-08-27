@@ -1,6 +1,8 @@
 # PhoneTwin Studio
 
-PhoneTwin Studio 是一个运行在 Mac 浏览器中的 iPhone 3D 分身工作台。原生 iOS Sender 使用 Core Motion 发送姿态数据，并通过 ReplayKit Broadcast Upload Extension 发送手机屏幕。Mac Relay 将两类数据转发给 Three.js 场景，最终把实时屏幕贴到手机模型上，并驱动模型跟随真机旋转。
+PhoneTwin Studio 是一个运行在 macOS 或 Windows 浏览器中的 iPhone 3D 分身工作台。原生 iOS Sender 使用 Core Motion 发送姿态数据，并通过 ReplayKit Broadcast Upload Extension 发送手机屏幕。Relay 将两类数据转发给 Three.js 场景，最终把实时屏幕贴到手机模型上，并驱动模型跟随真机旋转。
+
+macOS 版本位于 `main` 分支；Windows 版本位于 [`windows-edition`](https://github.com/ReinhartL/PhoneTwin-Studio/tree/windows-edition) 分支，使用 HTTP/WS 和 Windows 专用启动脚本。
 
 本项目采用 [MIT License](LICENSE)，可以自由使用、修改和再发布。外部产品参考位图不包含在公开仓库中，也不属于 MIT 授权范围。
 
@@ -21,7 +23,7 @@ iPhone
   PhoneTwin Sender (Core Motion, 60 Hz JSON) ───────┐
   ReplayKit Extension (screen, 30 FPS JPEG) ───────┤
                                                     ▼
-                                      Mac Relay :8788 (WS)
+                                      Relay :8788 (WS)
                                                     │
                                                     ▼
                                       Mac Relay :8787 (WSS)
@@ -61,12 +63,11 @@ PhoneTwin-Studio/
 
 ## 环境要求
 
-- macOS
 - Node.js `20.19+` 或 `22.12+`
 - npm
 - Xcode 16 或更高版本
 - iOS 17 或更高版本的真机
-- Mac 和 iPhone 连接同一个局域网
+- Mac/Windows 和 iPhone 连接同一个局域网
 - 建议使用 Apple Developer Program 账号。项目包含 App Group 和 Broadcast Extension，免费 Personal Team 可能无法签署全部能力。
 
 当前开发环境验证版本为 Node.js 25、npm 11、Xcode 26 和 iOS 26；项目部署目标仍是 iOS 17。
@@ -301,12 +302,12 @@ npm run relay
 
 ## Windows 前端通道
 
-`windows-frontend` 分支提供 Windows 开发机的 HTTP/WS 接入方式，不需要生成或信任 macOS 自签名证书。它仍使用同一个 Relay 协议：iPhone Sender 发送姿态和 ReplayKit 屏幕帧，Windows 浏览器接收并渲染 Three.js 模型。
+[`windows-edition`](https://github.com/ReinhartL/PhoneTwin-Studio/tree/windows-edition) 分支提供 Windows 开发机的 HTTP/WS 接入方式，不需要生成或信任 macOS 自签名证书。它仍使用同一个 Relay 协议：iPhone Sender 发送姿态和 ReplayKit 屏幕帧，Windows 浏览器接收并渲染 Three.js 模型。
 
 在 Windows 10/11 上安装 Node.js 20 LTS 或更高版本后，在 PowerShell 中运行：
 
 ```powershell
-git clone -b windows-frontend https://github.com/ReinhartL/PhoneTwin-Studio.git
+git clone -b windows-edition https://github.com/ReinhartL/PhoneTwin-Studio.git
 cd PhoneTwin-Studio
 .\scripts\start-windows.ps1
 ```
@@ -357,9 +358,9 @@ ws://192.168.1.50:8788/native
 
 ### iPhone 无法连接 Relay
 
-- 确认 Mac 和 iPhone 在同一个局域网，关闭会隔离设备的访客 Wi-Fi。
-- Endpoint 必须使用 Mac 的局域网 IP，不能在 iPhone 上填写 `localhost`。
-- 确认地址是 `ws://<MAC_IP>:8788/native`，不是 8787。
+- 确认电脑和 iPhone 在同一个局域网，关闭会隔离设备的访客 Wi-Fi。
+- Endpoint 必须使用电脑的局域网 IP，不能在 iPhone 上填写 `localhost`。
+- 确认地址是 `ws://<电脑_IP>:8788/native`，不是 8787。
 - 在 macOS 防火墙弹窗中允许 Node 接收入站连接。
 - 确认 8788 正在监听，并查看 Relay 终端是否出现 `sender/receiver connected`。
 
