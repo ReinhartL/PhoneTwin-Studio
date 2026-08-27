@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import dgram from "node:dgram";
 import net from "node:net";
 import path from "node:path";
 import { spawn } from "node:child_process";
@@ -28,10 +29,27 @@ function relayControlPlugin() {
     res.setHeader("Content-Type", "application/json");
     res.end(JSON.stringify(value));
   };
+  const getLanAddress = () =>
+    new Promise((resolve) => {
+      const socket = dgram.createSocket("udp4");
+      socket.once("error", () => {
+        socket.close();
+        resolve("127.0.0.1");
+      });
+      socket.connect(80, "8.8.8.8", () => {
+        const address = socket.address().address;
+        socket.close();
+        resolve(address || "127.0.0.1");
+      });
+    });
   return {
     name: "phone-twin-relay-control",
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
+        if (req.url === "/__lan-ip" && req.method === "GET") {
+          const address = await getLanAddress();
+          return json(res, 200, { address });
+        }
         if (!req.url?.startsWith("/__relay/")) return next();
         if (req.method !== "GET" && req.method !== "POST")
           return json(res, 405, { error: "method not allowed" });
@@ -57,13 +75,15 @@ export default defineConfig({
   plugins: [react(), relayControlPlugin()],
   server: {
     host: "0.0.0.0",
-    https: {
-      key: fs.readFileSync("./certs/dev-key.pem"),
-      cert: fs.readFileSync("./certs/dev-cert.pem"),
-    },
+    ...(process.env.PHONETWIN_HTTP === "1" ? {} : {
+      https: {
+        key: fs.readFileSync("./certs/dev-key.pem"),
+        cert: fs.readFileSync("./certs/dev-cert.pem"),
+      },
+    }),
     proxy: {
       "/motion": {
-        target: "https://localhost:8787",
+        target: process.env.PHONETWIN_HTTP === "1" ? "http://localhost:8787" : "https://localhost:8787",
         ws: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/motion/, ""),

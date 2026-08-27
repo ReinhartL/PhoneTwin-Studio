@@ -1,13 +1,15 @@
 import fs from "node:fs";
+import http from "node:http";
 import https from "node:https";
 import { WebSocketServer } from "ws";
 const sseClients = new Set();
-const tls = {
+const plainHttp = process.env.PHONETWIN_HTTP === "1";
+const tls = plainHttp ? null : {
   key: fs.readFileSync(new URL("../certs/dev-key.pem", import.meta.url)),
   cert: fs.readFileSync(new URL("../certs/dev-cert.pem", import.meta.url)),
 };
-const server = https.createServer(tls, (req, res) => {
-  const requestUrl = new URL(req.url, "https://localhost");
+const server = (plainHttp ? http : https).createServer(tls || {}, (req, res) => {
+  const requestUrl = new URL(req.url, plainHttp ? "http://localhost" : "https://localhost");
   if (req.method === "GET" && requestUrl.pathname === "/events") {
     res.writeHead(200, {
       "Content-Type": "text/event-stream",
@@ -97,6 +99,6 @@ wss.on("connection", handleConnection);
 const nativeWss = new WebSocketServer({ port: 8788 });
 nativeWss.on("connection", handleConnection);
 server.listen(8787, "0.0.0.0", () =>
-  console.log("Motion bridge wss://0.0.0.0:8787"),
+  console.log(`Motion bridge ${plainHttp ? "ws" : "wss"}://0.0.0.0:8787`),
 );
 console.log("Native sender bridge ws://0.0.0.0:8788");

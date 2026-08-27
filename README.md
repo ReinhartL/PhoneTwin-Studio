@@ -299,6 +299,60 @@ npm run preview
 npm run relay
 ```
 
+## Windows 前端通道
+
+`windows-frontend` 分支提供 Windows 开发机的 HTTP/WS 接入方式，不需要生成或信任 macOS 自签名证书。它仍使用同一个 Relay 协议：iPhone Sender 发送姿态和 ReplayKit 屏幕帧，Windows 浏览器接收并渲染 Three.js 模型。
+
+在 Windows 10/11 上安装 Node.js 20 LTS 或更高版本后，在 PowerShell 中运行：
+
+```powershell
+git clone -b windows-frontend https://github.com/ReinhartL/PhoneTwin-Studio.git
+cd PhoneTwin-Studio
+.\scripts\start-windows.ps1
+```
+
+启动脚本会先检查依赖。第一次运行（或 `node_modules` 不完整）会自动执行 `npm ci`，无需手动安装；后续运行会直接启动工作台。脚本随后请求一次管理员权限，并在 Windows Defender 防火墙中创建 `PhoneTwin Studio LAN` 规则，仅允许专用网络上的 TCP `5173`、`8787`、`8788`。如果公司电脑不允许修改防火墙，可以跳过自动配置：
+
+```powershell
+.\scripts\start-windows.ps1 -SkipFirewall
+```
+
+然后在 Windows 浏览器打开：
+
+```text
+http://localhost:5173
+```
+
+查看 Windows 局域网地址：
+
+```powershell
+ipconfig
+```
+
+### 使用二维码连接 iPhone Sender
+
+工作台启动后，在控制面板点击 `SHOW IPHONE SETUP QR`。用 iPhone `PhoneTwin Sender` 扫描二维码即可导入 Endpoint，无需手动输入。二维码使用 Windows 的默认局域网网卡地址（与 Vite 启动日志中的 `Network: http://<WINDOWS_IP>:5173` 一致），不会把 `localhost` 写入 iPhone 配置。
+
+如果扫码不可用，也可以在 iPhone `PhoneTwin Sender` 中手动将 Endpoint 填为 Windows 的局域网 IPv4 地址：
+
+```text
+ws://<WINDOWS_IP>:8788/native
+```
+
+例如：
+
+```text
+ws://192.168.1.50:8788/native
+```
+
+首次运行需要在 Windows Defender 防火墙中允许 Node.js 访问专用网络，并确保端口 `5173`、`8787`、`8788` 可被局域网访问。打开工作台后点击 `START MAC RELAY` 仍可启动本地 Relay，按钮名称沿用现有 UI。
+
+### Windows 屏幕流选择
+
+推荐继续使用 iPhone App 内的 ReplayKit 广播：在系统屏幕广播列表中选择 `PhoneTwin Broadcast`，它会把 JPEG 屏幕帧发送到 Windows Relay。Windows 端不需要实现 Apple 私有投屏协议。
+
+如果需要完全脱离 PhoneTwin Broadcast，也可以使用 AirPlay 接收器（例如 UxPlay 或其他 Windows AirPlay receiver）先把 iPhone 画面接入 Windows，再开发额外的采集适配层。AirPlay 接收器涉及 Bonjour/mDNS、Windows 防火墙和 Apple 私有协议，不属于当前分支的默认数据管道，也不能直接提供 Core Motion 姿态数据。
+
 ## 常见问题
 
 ### iPhone 无法连接 Relay

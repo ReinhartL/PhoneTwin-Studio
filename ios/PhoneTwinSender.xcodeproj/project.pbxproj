@@ -209,7 +209,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = PhoneTwinSender/PhoneTwinSender.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = DRNVX347XM;
 				INFOPLIST_FILE = PhoneTwinSender/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -225,7 +225,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = PhoneTwinBroadcast/PhoneTwinBroadcast.entitlements;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = DRNVX347XM;
 				INFOPLIST_FILE = PhoneTwinBroadcast/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -242,7 +242,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = PhoneTwinBroadcast/PhoneTwinBroadcast.entitlements;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = DRNVX347XM;
 				INFOPLIST_FILE = PhoneTwinBroadcast/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -382,7 +382,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = PhoneTwinSender/PhoneTwinSender.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = DRNVX347XM;
 				INFOPLIST_FILE = PhoneTwinSender/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

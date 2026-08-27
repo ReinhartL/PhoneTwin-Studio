@@ -2,20 +2,66 @@
   "name": "phonetwin-studio",
   "private": true,
   "version": "1.0.0",
+  "description": "PhoneTwin Studio desktop workbench for iPhone motion and screen streaming",
+  "author": "PhoneTwin Studio",
+  "main": "desktop/main.cjs",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "relay": "node relay/server.mjs",
     "motion": "npm run relay",
     "test": "node --test web/src/*.test.mjs",
     "build": "vite build",
-    "preview": "vite preview --host 0.0.0.0"
+    "preview": "vite preview --host 0.0.0.0",
+    "desktop:dev": "electron desktop/main.cjs",
+    "desktop:build": "npm run build && electron-builder --dir",
+    "desktop:win": "npm run build && electron-builder --win nsis --x64"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^6.1.0",
+    "qrcode": "^1.5.4",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "three": "^0.185.1",
     "vite": "^8.2.2",
     "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "electron": "^44.0.0",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "com.phonetwin.studio",
+    "productName": "PhoneTwin Studio",
+    "asar": true,
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "desktop/**/*",
+      "relay/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "dist",
+        "to": "dist"
+      },
+      {
+        "from": "relay",
+        "to": "relay"
+      }
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "artifactName": "PhoneTwin-Studio-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   }
 }

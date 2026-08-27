@@ -5,6 +5,7 @@ import "./style.css";
 import { createIPhone17ProMaxModel } from "./createIPhone17ProMax.js";
 import ColorBends from "./ColorBends.jsx";
 import Strands from "./Strands.jsx";
+import QRCode from "qrcode";
 import { shouldStartDirector } from "./sceneMotion.mjs";
 const motionSocketUrl = () =>
   `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/motion`;
@@ -610,6 +611,9 @@ function App() {
   const [screenStatus, setScreenStatus] = useState("Waiting for ReplayKit screen frames");
   const [relayRunning, setRelayRunning] = useState(false);
   const [relayStarting, setRelayStarting] = useState(false);
+  const [showSenderQr, setShowSenderQr] = useState(false);
+  const [senderQr, setSenderQr] = useState("");
+  const [senderHost, setSenderHost] = useState(() => location.hostname || "127.0.0.1");
   const [calibrated, setCalibrated] = useState(false);
   const [calibrationVersion, setCalibrationVersion] = useState(0);
   const motionCalibration = useRef(new THREE.Quaternion());
@@ -633,6 +637,21 @@ function App() {
     } finally {
       setRelayStarting(false);
     }
+  };
+  const showSenderCode = async () => {
+    let host = location.hostname || "127.0.0.1";
+    if (host === "localhost" || host === "127.0.0.1") {
+      try {
+        const response = await fetch("/__lan-ip");
+        host = (await response.json()).address || host;
+      } catch {}
+    }
+    setSenderHost(host);
+    const endpoint = `ws://${host}:8788/native`;
+    try {
+      setSenderQr(await QRCode.toDataURL(endpoint, { width: 220, margin: 2 }));
+      setShowSenderQr(true);
+    } catch {}
   };
   const startRecording = async () => {
     if (typeof MediaRecorder === "undefined") {
@@ -1171,6 +1190,15 @@ function App() {
                     ? "DISCONNECT IPHONE SENDER"
                     : "CONNECT IPHONE SENDER"}
                 </button>
+                <button className="wide" onClick={showSenderCode}>SHOW IPHONE SETUP QR</button>
+                {showSenderQr && (
+                  <div className="sender-qr" role="dialog" aria-label="iPhone Sender setup">
+                    <img src={senderQr} alt="Scan to configure iPhone Sender" />
+                    <b>Scan with PhoneTwin Sender</b>
+                    <small>{`ws://${senderHost}:8788/native`}</small>
+                    <button className="wide" onClick={() => setShowSenderQr(false)}>CLOSE</button>
+                  </div>
+                )}
                 <b>
                   ●{" "}
                   {sensorState.connected
