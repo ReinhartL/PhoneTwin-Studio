@@ -9,7 +9,15 @@
   <key>CFBundleDisplayName</key><string>PhoneTwin Sender</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>UILaunchScreen</key><dict/>
+  <key>UISupportedInterfaceOrientations</key>
+  <array>
+    <string>UIInterfaceOrientationPortrait</string>
+    <string>UIInterfaceOrientationPortraitUpsideDown</string>
+    <string>UIInterfaceOrientationLandscapeLeft</string>
+    <string>UIInterfaceOrientationLandscapeRight</string>
+  </array>
   <key>NSMotionUsageDescription</key><string>用于同步 iPhone 姿态到 Mac 端 3D 分身。</string>
-  <key>NSLocalNetworkUsageDescription</key><string>用于将屏幕和姿态发送到同一 Wi‑Fi 下的 Mac 工作台。</string>
+  <key>NSLocalNetworkUsageDescription</key><string>用于将屏幕和姿态发送到同一 Wi‑Fi 下的 PhoneTwin Studio 工作台。</string>
+  <key>NSCameraUsageDescription</key><string>用于扫描 PhoneTwin Studio 工作台提供的连接二维码。</string>
   <key>NSAppTransportSecurity</key><dict><key>NSAllowsArbitraryLoads</key><true/></dict>
 </dict></plist>

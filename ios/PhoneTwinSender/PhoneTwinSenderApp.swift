@@ -3,6 +3,7 @@ import Combine
 import ReplayKit
 import UIKit
 import CoreMotion
+import AVFoundation
 
 private let appGroup = "group.com.img2threejs.phonetwin"
 
@@ -12,14 +13,59 @@ final class SenderController: ObservableObject {
     @Published var motionStatus = "等待运动与健身授权"
     @Published var motionSamples = 0
     @Published var localNetworkStatus = "尚未请求"
-    @Published var endpoint = "ws://192.168.1.100:8788/native"
+    @Published var endpoint: String
+    @Published var configurationStatus = "请输入运行 PhoneTwin Studio 的电脑地址"
     private let sessionId = UUID().uuidString
     private var transport: WebSocketSessionTransport?
     private let motionManager = CMMotionManager()
     private let activityManager = CMMotionActivityManager()
 
+    init() {
+        endpoint = UserDefaults.standard.string(forKey: "phonetwin.endpoint")
+            ?? UserDefaults(suiteName: "group.com.img2threejs.phonetwin")?.string(forKey: "endpoint")
+            ?? ""
+        if !endpoint.isEmpty {
+            configurationStatus = "已保存上次使用的地址"
+        }
+    }
+
+    var normalizedEndpoint: URL? {
+        let value = endpoint.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !value.isEmpty else { return nil }
+        let candidate: String
+        if value.contains("://") {
+            candidate = value
+        } else if value.contains("/") || value.contains(":") {
+            candidate = "ws://\(value)"
+        } else {
+            candidate = "ws://\(value):8788/native"
+        }
+        guard let url = URL(string: candidate),
+              url.scheme == "ws" || url.scheme == "wss",
+              url.host != nil,
+              url.port == 8788 || url.port == nil else { return nil }
+        return url
+    }
+
+    func applyScannedEndpoint(_ value: String) {
+        endpoint = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        if normalizedEndpoint != nil {
+            endpoint = normalizedEndpoint!.absoluteString
+            UserDefaults.standard.set(endpoint, forKey: "phonetwin.endpoint")
+            UserDefaults(suiteName: appGroup)?.set(endpoint, forKey: "endpoint")
+            configurationStatus = "二维码地址已保存"
+        } else {
+            configurationStatus = "二维码内容不是有效的 Sender 地址"
+        }
+    }
+
     func start() {
-        guard let url = URL(string: endpoint) else { return }
+        guard let url = normalizedEndpoint else {
+            configurationStatus = "地址格式无效，例如 192.168.1.100:8788/native"
+            return
+        }
+        endpoint = url.absoluteString
+        UserDefaults.standard.set(endpoint, forKey: "phonetwin.endpoint")
         UserDefaults(suiteName: "group.com.img2threejs.phonetwin")?.set(endpoint, forKey: "endpoint")
         UserDefaults(suiteName: "group.com.img2threejs.phonetwin")?.set(sessionId, forKey: "sessionId")
         let transport = WebSocketSessionTransport(url: url, sessionId: sessionId)
@@ -109,18 +155,29 @@ struct PhoneTwinSenderApp: App {
 
 struct SenderView: View {
     @ObservedObject var controller: SenderController
+    @State private var scannerPresented = false
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
-                Text("把 iPhone 屏幕和姿态发送到 Mac 工作台")
+                Text("把 iPhone 屏幕和姿态发送到 PhoneTwin Studio 工作台")
                     .foregroundStyle(.secondary)
-                GroupBox("Mac 工作台") {
-                    TextField("ws://Mac 地址:8788/native", text: $controller.endpoint)
+                GroupBox("PhoneTwin Studio 工作台") {
+                    TextField("电脑 IP:8788/native", text: $controller.endpoint)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
+                        .keyboardType(.URL)
                         .textFieldStyle(.roundedBorder)
+                    Text("例如：192.168.1.100:8788/native。手机和运行工作台的电脑必须连接同一个 Wi-Fi。")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                    Label(controller.configurationStatus, systemImage: "network")
+                        .font(.caption)
+                        .foregroundStyle(controller.configurationStatus.contains("无效") ? .red : .secondary)
+                    Button { scannerPresented = true } label: {
+                        Label("扫描工作台二维码", systemImage: "qrcode.viewfinder")
+                    }
                 }
                 Button(controller.running ? "结束 Sender 会话" : "准备 Sender 会话") {
                     controller.running ? controller.stop() : controller.start()
@@ -158,6 +215,12 @@ struct SenderView: View {
                 .padding(24)
             }
             .navigationTitle("PhoneTwin Sender")
+            .sheet(isPresented: $scannerPresented) {
+                QRScannerView { value in
+                    controller.applyScannedEndpoint(value)
+                    scannerPresented = false
+                }
+            }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     NavigationLink {
@@ -270,5 +333,50 @@ struct BroadcastPicker: UIViewRepresentable {
         uiView.tintColor = UIColor.label
         uiView.setNeedsLayout()
         uiView.layoutIfNeeded()
+    }
+}
+
+struct QRScannerView: UIViewControllerRepresentable {
+    let onResult: (String) -> Void
+    func makeCoordinator() -> Coordinator { Coordinator(onResult: onResult) }
+    func makeUIViewController(context: Context) -> ScannerViewController {
+        let controller = ScannerViewController()
+        controller.onResult = onResult
+        return controller
+    }
+    func updateUIViewController(_ uiViewController: ScannerViewController, context: Context) {}
+    final class Coordinator {
+        let onResult: (String) -> Void
+        init(onResult: @escaping (String) -> Void) { self.onResult = onResult }
+    }
+}
+
+final class ScannerViewController: UIViewController, AVCaptureMetadataOutputObjectsDelegate {
+    var onResult: ((String) -> Void)?
+    private let session = AVCaptureSession()
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = .black
+        guard let device = AVCaptureDevice.default(for: .video), let input = try? AVCaptureDeviceInput(device: device), session.canAddInput(input) else { return }
+        session.addInput(input)
+        let output = AVCaptureMetadataOutput()
+        guard session.canAddOutput(output) else { return }
+        session.addOutput(output)
+        output.setMetadataObjectsDelegate(self, queue: .main)
+        output.metadataObjectTypes = [.qr]
+        let preview = AVCaptureVideoPreviewLayer(session: session)
+        preview.videoGravity = .resizeAspectFill
+        preview.frame = view.bounds
+        view.layer.addSublayer(preview)
+        DispatchQueue.global(qos: .userInitiated).async { self.session.startRunning() }
+    }
+    func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from connection: AVCaptureConnection) {
+        guard let value = (metadataObjects.first as? AVMetadataMachineReadableCodeObject)?.stringValue else { return }
+        session.stopRunning()
+        onResult?(value)
+    }
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        if session.isRunning { session.stopRunning() }
     }
 }

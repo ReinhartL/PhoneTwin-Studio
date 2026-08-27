@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A1C0A1C0A1C0A1C0A1C0A1C0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B2D0B2D0B2D0B2D0B2D0B2D0 /* Assets.xcassets */; };
 		0D1EA5C309FEACDC7A125906 /* SessionTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEBA076FBE51136D4CCF4B13 /* SessionTransport.swift */; };
 		1522DC2819DB78E56486746B /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = F37FE2EEB29007EDBE5619BF /* README.md */; };
 		3BEA461344986C7527D47E43 /* MotionPacket.swift in Sources */ = {isa = PBXBuildFile; fileRef = C294D5AF003FAF7AC84A0BF6 /* MotionPacket.swift */; };
@@ -44,6 +45,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		B2D0B2D0B2D0B2D0B2D0B2D0 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		08E4E5268027C9FF6180D606 /* PhoneTwinSender.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PhoneTwinSender.entitlements; sourceTree = "<group>"; };
 		537F05EFDC5A268C835AA507 /* PhoneTwinSenderApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhoneTwinSenderApp.swift; sourceTree = "<group>"; };
 		56E8135CD10E43D38E51B80C /* PhoneTwinSender.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PhoneTwinSender.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -68,6 +70,7 @@
 				537F05EFDC5A268C835AA507 /* PhoneTwinSenderApp.swift */,
 				F37FE2EEB29007EDBE5619BF /* README.md */,
 				BEBA076FBE51136D4CCF4B13 /* SessionTransport.swift */,
+				B2D0B2D0B2D0B2D0B2D0B2D0 /* Assets.xcassets */,
 			);
 			path = PhoneTwinSender;
 			sourceTree = "<group>";
@@ -136,7 +139,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 1430;
+				LastUpgradeCheck = 2660;
 			};
 			buildConfigurationList = 2DDC70781987B8D38B2A961A /* Build configuration list for PBXProject "PhoneTwinSender" */;
 			developmentRegion = en;
@@ -163,6 +166,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A1C0A1C0A1C0A1C0A1C0A1C0 /* Assets.xcassets in Resources */,
 				1522DC2819DB78E56486746B /* README.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -209,7 +213,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = PhoneTwinSender/PhoneTwinSender.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = DRNVX347XM;
 				INFOPLIST_FILE = PhoneTwinSender/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -225,7 +229,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = PhoneTwinBroadcast/PhoneTwinBroadcast.entitlements;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = DRNVX347XM;
 				INFOPLIST_FILE = PhoneTwinBroadcast/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -242,7 +246,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = PhoneTwinBroadcast/PhoneTwinBroadcast.entitlements;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = DRNVX347XM;
 				INFOPLIST_FILE = PhoneTwinBroadcast/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -290,9 +294,10 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = DRNVX347XM;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -313,6 +318,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.9;
@@ -354,9 +360,10 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = DRNVX347XM;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -370,6 +377,7 @@
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.9;
@@ -382,7 +390,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = PhoneTwinSender/PhoneTwinSender.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = DRNVX347XM;
 				INFOPLIST_FILE = PhoneTwinSender/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
