@@ -7,6 +7,48 @@ import ColorBends from "./ColorBends.jsx";
 import Strands from "./Strands.jsx";
 import QRCode from "qrcode";
 import { shouldStartDirector } from "./sceneMotion.mjs";
+
+function GithubLink({ href, label }) {
+  return (
+    <a
+      className="reference-github"
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      aria-label={label}
+      title={label}
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 .6a11.4 11.4 0 0 0-3.6 22.2c.57.1.78-.25.78-.55v-2.08c-3.17.69-3.84-1.34-3.84-1.34-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.75 1.18 1.75 1.18 1.02 1.74 2.68 1.24 3.33.95.1-.74.4-1.24.73-1.53-2.53-.29-5.2-1.27-5.2-5.65 0-1.25.45-2.27 1.18-3.07-.12-.29-.51-1.45.11-3.02 0 0 .96-.31 3.14 1.17a10.9 10.9 0 0 1 5.72 0c2.18-1.48 3.14-1.17 3.14-1.17.62 1.57.23 2.73.11 3.02.73.8 1.18 1.82 1.18 3.07 0 4.39-2.67 5.36-5.21 5.64.41.35.78 1.04.78 2.1v3.1c0 .3.2.66.79.55A11.4 11.4 0 0 0 12 .6Z" />
+      </svg>
+    </a>
+  );
+}
+
+function ReferenceLinks() {
+  return (
+    <nav className="reference-links" aria-label="Reference links">
+      <div className="reference-row">
+        <span className="reference-label">REFERENCE</span>
+        <a href="https://threejs.org/examples/#webgl_animation_keyframes" target="_blank" rel="noreferrer">
+          Model example
+        </a>
+        <GithubLink href="https://github.com/mrdoob/three.js" label="Open Three.js GitHub repository" />
+        <span className="reference-divider" />
+        <a href="https://www.reactbits.dev" target="_blank" rel="noreferrer">
+          Motion &amp; Light
+        </a>
+        <GithubLink href="https://github.com/DavidHDev/react-bits" label="Open React Bits GitHub repository" />
+      </div>
+      <div className="reference-row skills-row">
+        <span className="reference-label">SKILLS</span>
+        <a href="https://github.com/img2threejs/img2threejs" target="_blank" rel="noreferrer">img2threejs</a>
+        <a href="https://github.com/anthropics/skills" target="_blank" rel="noreferrer">Frontend Design</a>
+        <a href="https://github.com/cjgammon/three.js-camera-path-tool" target="_blank" rel="noreferrer">Camera Path</a>
+      </div>
+    </nav>
+  );
+}
 const motionSocketUrl = () =>
   `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/motion`;
 const motionEventsUrl = () => `${location.origin}/motion/events`;
@@ -36,6 +78,9 @@ function PhoneScene({
   pathPoints,
   pathEditing,
   onPathPoint,
+  unlimitedMotion,
+  stagePositionReset,
+  stageBaseVisible,
   showIntro,
 }) {
   const ref = useRef();
@@ -74,6 +119,7 @@ function PhoneScene({
     root.rotation.y = 0.55;
     state.current.root = root;
     state.current.pathEditing = pathEditing;
+    state.current.unlimitedMotion = unlimitedMotion;
     state.current.modelPivot = modelPivot;
     state.current.camera = camera;
     state.current.directorPlaying = directorPlaying;
@@ -111,6 +157,7 @@ function PhoneScene({
     floor.rotation.x = -Math.PI / 2;
     floor.position.y = -3.25;
     scene.add(floor);
+    state.current.floor = floor;
     const onResize = () => {
       camera.aspect = el.clientWidth / el.clientHeight;
       camera.updateProjectionMatrix();
@@ -140,6 +187,7 @@ function PhoneScene({
         return;
       }
       dragging = true;
+      state.current.dragMode = state.current.unlimitedMotion ? "translate" : "rotate";
       lastX = e.clientX;
       lastY = e.clientY;
     };
@@ -157,12 +205,19 @@ function PhoneScene({
       );
       state.current.pointerInside = true;
       if (!dragging) return;
-      root.rotation.y += (e.clientX - lastX) * 0.008;
-      root.rotation.x = THREE.MathUtils.clamp(
-        root.rotation.x + (e.clientY - lastY) * 0.005,
-        -0.65,
-        0.65,
-      );
+      if (state.current.dragMode === "translate") {
+        // modelPivot is rotated 180 degrees around Y, so local X must be
+        // inverted to keep screen-space dragging aligned with the pointer.
+        root.position.x = THREE.MathUtils.clamp(root.position.x - (e.clientX - lastX) * 0.014, -3.8, 3.8);
+        root.position.y = THREE.MathUtils.clamp(root.position.y - (e.clientY - lastY) * 0.014, -2.8, 2.8);
+      } else {
+        root.rotation.y += (e.clientX - lastX) * 0.008;
+        root.rotation.x = THREE.MathUtils.clamp(
+          root.rotation.x + (e.clientY - lastY) * 0.005,
+          -0.65,
+          0.65,
+        );
+      }
       lastX = e.clientX;
       lastY = e.clientY;
     };
@@ -208,10 +263,10 @@ function PhoneScene({
         if (state.current.motionMode === "orbit")
           root.rotation.y += 0.008 * state.current.autoSpeed;
         if (state.current.motionMode === "float") {
-          root.position.y = Math.sin(t * state.current.autoSpeed) * 0.14;
+          if (!state.current.unlimitedMotion) root.position.y = Math.sin(t * state.current.autoSpeed) * 0.14;
           root.rotation.z = Math.sin(t * 0.7 * state.current.autoSpeed) * 0.045;
         }
-      } else if (state.current.motionMode !== "float") {
+      } else if (state.current.motionMode !== "float" && !state.current.unlimitedMotion) {
         root.position.y = THREE.MathUtils.lerp(root.position.y, 0, 0.12);
       }
       if (!dragging && !state.current.viewLock && !state.current.directorTween)
@@ -266,6 +321,18 @@ function PhoneScene({
     state.current.pathEditing = pathEditing;
     state.current.onPathPoint = onPathPoint;
   }, [pathEditing, onPathPoint]);
+  useEffect(() => {
+    state.current.unlimitedMotion = unlimitedMotion;
+  }, [unlimitedMotion]);
+  useEffect(() => {
+    const root = state.current.root;
+    if (!root || !stagePositionReset) return;
+    root.position.x = 0;
+    root.position.y = 0;
+  }, [stagePositionReset]);
+  useEffect(() => {
+    if (state.current.floor) state.current.floor.visible = stageBaseVisible;
+  }, [stageBaseVisible]);
   useEffect(() => {
     const group = state.current.pathGroup;
     if (!group) return;
@@ -333,7 +400,7 @@ function PhoneScene({
   }, [autoSpeed]);
   useEffect(() => {
     state.current.motionMode = motionMode;
-    if (motionMode !== "float" && state.current.root) {
+    if (motionMode !== "float" && state.current.root && !state.current.unlimitedMotion) {
       state.current.root.position.y = 0;
       state.current.root.rotation.z = 0;
     }
@@ -576,6 +643,9 @@ function App() {
   const [actionReset, setActionReset] = useState(0);
   const [pathPoints, setPathPoints] = useState([]);
   const [pathEditing, setPathEditing] = useState(false);
+  const [unlimitedMotion, setUnlimitedMotion] = useState(false);
+  const [stagePositionReset, setStagePositionReset] = useState(0);
+  const [stageBaseVisible, setStageBaseVisible] = useState(true);
   const [recording, setRecording] = useState(false);
   const [recordingStatus, setRecordingStatus] = useState("Idle");
   const [captureWorkspace, setCaptureWorkspace] = useState(true);
@@ -997,6 +1067,9 @@ function App() {
           pathPoints={pathPoints}
           pathEditing={pathEditing}
           onPathPoint={addPathPoint}
+          unlimitedMotion={unlimitedMotion}
+          stagePositionReset={stagePositionReset}
+          stageBaseVisible={stageBaseVisible}
           showIntro={showIntro}
         />
         <aside className="panel">
@@ -1322,6 +1395,30 @@ function App() {
           )}
           {tab === "Scene" && (
             <>
+              <div className="panel-title">STAGE MOVEMENT</div>
+              <label className="scene-toggle">
+                <input
+                  type="checkbox"
+                  checked={unlimitedMotion}
+                  onChange={(event) => setUnlimitedMotion(event.target.checked)}
+                />
+                <span>
+                  <b>UNLIMITED MOTION</b>
+                  <small>{unlimitedMotion ? "Drag to move the phone across the stage" : "Drag to rotate the phone"}</small>
+                </span>
+              </label>
+              <button
+                className="wide stage-reset"
+                onClick={() => setStagePositionReset((value) => value + 1)}
+              >
+                RESET STAGE POSITION
+              </button>
+              <button
+                className={`wide stage-reset${stageBaseVisible ? "" : " active"}`}
+                onClick={() => setStageBaseVisible((value) => !value)}
+              >
+                {stageBaseVisible ? "HIDE STAGE BASE" : "SHOW STAGE BASE"}
+              </button>
               <div className="panel-title">LIGHT PRESETS</div>
               <div className="presets">
                 {presets.map((p) => (
@@ -1369,6 +1466,7 @@ function App() {
         <span>
           <b>03</b> INTERACTION
         </span>
+        <ReferenceLinks />
       </footer>
     </main>
   );
