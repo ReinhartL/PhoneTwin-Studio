@@ -167,8 +167,7 @@ function PhoneScene({
         const eased = frame.progress < 0.5
           ? 4 * frame.progress * frame.progress * frame.progress
           : 1 - Math.pow(-2 * frame.progress + 2, 3) / 2;
-        if (frame.path) camera.position.copy(frame.path.getPointAt(eased));
-        else camera.position.z = THREE.MathUtils.lerp(frame.fromZ, frame.toZ, eased);
+        camera.position.z = THREE.MathUtils.lerp(frame.fromZ, frame.toZ, eased);
         root.rotation.x = THREE.MathUtils.lerp(frame.fromRotation.x, frame.toRotation.x, eased);
         root.rotation.y = THREE.MathUtils.lerp(frame.fromRotation.y, frame.toRotation.y, eased);
         root.rotation.z = THREE.MathUtils.lerp(frame.fromRotation.z, frame.toRotation.z, eased);
@@ -399,17 +398,7 @@ function PhoneScene({
       tilt: { z: 11.8, rotation: [0.28, -0.4, 0.12] },
       dive: { z: 10.4, rotation: [-0.45, 0.15, 0] },
       pull: { z: 15, rotation: [-0.08, Math.PI * 0.15, 0] },
-      path: { z: 11.8, rotation: [0, 0.55, 0] },
     }[director] || { z: 11.8, rotation: [0, 0.55, 0] };
-    const path = director === "path"
-      ? new THREE.CatmullRomCurve3([
-          new THREE.Vector3(c.position.x, c.position.y, c.position.z),
-          new THREE.Vector3(1.3, 0.15, 10.7),
-          new THREE.Vector3(0.25, 0.7, 9.6),
-          new THREE.Vector3(-1.15, 0.25, 10.8),
-          new THREE.Vector3(0, 0, 11.8),
-        ])
-      : null;
     state.current.viewLock = true;
     // directorRun is the authoritative restart signal. React may keep the
     // public playing state at true between two consecutive action clicks, so
@@ -419,7 +408,6 @@ function PhoneScene({
       progress: 0,
       fromZ: c.position.z,
       toZ: target.z,
-      path,
       fromRotation: r.rotation.clone(),
       toRotation: new THREE.Euler(...target.rotation),
     };
@@ -1203,7 +1191,6 @@ function App() {
                   { label: "TILTED SHOT", action: "tilt" },
                   { label: "TOP DIVE", action: "dive" },
                   { label: "VERTICAL PULL", action: "pull" },
-                  { label: "PATH PLANNER", action: "path" },
                 ].map((item, i) => (
                   <button
                     key={item.action}
