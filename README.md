@@ -23,7 +23,7 @@ iPhone
   PhoneTwin Sender (Core Motion, 60 Hz JSON) ───────┐
   ReplayKit Extension (screen, 30 FPS JPEG) ───────┤
                                                     ▼
-                                      Relay :8788 (WS)
+                                      Mac Relay :8788 (WS)
                                                     │
                                                     ▼
                                       Mac Relay :8787 (WSS)
