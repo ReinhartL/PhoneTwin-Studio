@@ -150,6 +150,28 @@ lsof -nP -iTCP:8788 -sTCP:LISTEN
 
 ## 打包并安装 iOS App
 
+### 普通用户：通过 TestFlight 试用
+
+如果没有 Apple Developer 账号、Xcode 或 App Group 开发权限，不需要自行编译 iOS App。请直接使用 PhoneTwin Sender 的 TestFlight 外部测试版本：
+
+**[加入 PhoneTwin Sender TestFlight 测试](https://testflight.apple.com/join/EFpEgJfW)**
+
+安装步骤：
+
+1. 在 iPhone 上安装 Apple 官方 `TestFlight` App。
+2. 打开上面的邀请链接，点击“开始测试”，再点击“安装”。
+3. 安装并打开 `PhoneTwin Sender`，在 App 内填入工作台提供的电脑地址，或扫描工作台的连接二维码。
+4. 允许“本地网络”“运动与健身”和相机权限。相机权限只用于扫描连接二维码。
+5. 点击“准备 Sender 会话”，回到工作台点击 `CONNECT IPHONE SENDER`。
+6. 在 iPhone 的系统屏幕广播列表中选择 `PhoneTwin Broadcast` 并开始广播。姿态数据和屏幕帧会通过同一个 Relay 会话发送到工作台。
+7. 手机屏幕正对自己并保持竖直，在工作台点击 `FACE THE SCREEN FORWARD, THEN CALIBRATE` 完成初始校准。
+
+TestFlight 版本与本仓库中的 `ios/` 源码属于同一个 PhoneTwin Sender 产品：仓库提供可审阅、可自行签名的工程源码，TestFlight 提供由项目构建并由 Apple 签名分发的试用安装包。两者的功能目标和数据协议一致，但 TestFlight 包的签名、配置文件和分发元数据由 Apple 管理；它不是仓库中可直接下载的 IPA 文件。
+
+TestFlight 用户不需要拥有 PhoneTwin 项目的 Apple Developer Team，也不需要自己创建 App Group。App Group、ReplayKit Broadcast Extension 和相关权限已经包含在发布构建中。TestFlight 外部测试版本仅用于本项目的非商用试用、演示、评估和反馈；请勿将其用于商业服务、收费交付、未经授权的二次分发或任何违反 Apple 条款、当地法律及第三方软件许可的用途。测试版本可能有有效期或测试名额限制，具体以 TestFlight 和 App Store Connect 状态为准。
+
+完整的 TestFlight 使用说明、源码构建关系和故障排查见 [ios/TESTFLIGHT.md](ios/TESTFLIGHT.md)。
+
 ### 1. 打开工程
 
 ```bash
